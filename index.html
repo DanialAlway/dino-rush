@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dino Rush</title>
+  <meta name="description" content="Dino Rush: a bigger take on the classic offline dinosaur game, with biomes, day and night, power-ups, coins and skins.">
+  <meta name="theme-color" content="#0e1020">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <h1 class="brand">DINO<span>RUSH</span></h1>
+      <div class="tools">
+        <button id="btnMute" class="icon-btn" aria-label="Toggle sound" title="Sound (M)">♪</button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause" title="Pause (P)">II</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas id="game" width="960" height="360" aria-label="Dino Rush game"></canvas>
+    </div>
+
+    <div class="touch" id="touch">
+      <button id="tDuck" class="touch-btn">▼ DUCK</button>
+      <button id="tJump" class="touch-btn primary">▲ JUMP</button>
+    </div>
+
+    <p class="hint">SPACE / ↑ jump (hold = higher) · ↓ duck / fast-fall · P pause · M mute</p>
+  </main>
+
+  <!-- Main menu -->
+  <section id="menu" class="overlay">
+    <div class="card">
+      <h2 class="logo">DINO<br><span>RUSH</span></h2>
+      <p class="tag">The offline dino, but way bigger.</p>
+      <div class="stats">
+        <div><small>BEST</small><b id="mBest">0</b></div>
+        <div><small>COINS</small><b id="mCoins">0</b></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-act="play">PLAY</button>
+        <button class="btn" data-act="shop">SHOP</button>
+        <button class="btn" data-act="help">HOW TO PLAY</button>
+      </div>
+      <div id="help" class="help hidden">
+        <p><b>JUMP</b> Space, ↑ or tap. Hold for a higher jump.</p>
+        <p><b>DUCK</b> ↓ ducks under pterodactyls. Press it in the air to drop fast.</p>
+        <p><b>ZONES</b> Every 1000 points: Desert → Plains → Tundra → Volcano.</p>
+        <p><b>DANGERS</b> Cacti, ice spikes, rocks, pterodactyls, rolling boulders and falling meteors.</p>
+        <p><b>POWER-UPS</b>
+          <span class="pw" style="--c:#3fa9f5">S</span> Shield
+          <span class="pw" style="--c:#e8463b">M</span> Magnet
+          <span class="pw" style="--c:#9b59ff">T</span> Slow-mo
+          <span class="pw" style="--c:#2ecc71">J</span> Double jump
+          <span class="pw" style="--c:#f5b700">2</span> 2× score
+        </p>
+        <p><b>COINS</b> Spend them in the shop on skins and upgrades.</p>
+      </div>
+      <p class="press">press SPACE to start</p>
+    </div>
+  </section>
+
+  <!-- Pause -->
+  <section id="pause" class="overlay hidden">
+    <div class="card">
+      <h2 class="title">PAUSED</h2>
+      <div class="actions">
+        <button class="btn primary" data-act="resume">RESUME</button>
+        <button class="btn" data-act="menu">QUIT TO MENU</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Game over -->
+  <section id="over" class="overlay hidden">
+    <div class="card">
+      <h2 class="title">GAME OVER</h2>
+      <div id="newBest" class="badge hidden">★ NEW BEST ★</div>
+      <div class="stats three">
+        <div><small>SCORE</small><b id="oScore">0</b></div>
+        <div><small>BEST</small><b id="oBest">0</b></div>
+        <div><small>EARNED</small><b id="oCoins">0</b></div>
+      </div>
+      <p class="sub" id="oZone"></p>
+      <div class="actions">
+        <button class="btn primary" data-act="play">PLAY AGAIN</button>
+        <button class="btn" data-act="shop">SHOP</button>
+        <button class="btn" data-act="menu">MENU</button>
+      </div>
+      <p class="press">press SPACE to retry</p>
+    </div>
+  </section>
+
+  <!-- Shop -->
+  <section id="shop" class="overlay hidden">
+    <div class="card wide">
+      <div class="shop-head">
+        <h2 class="title">SHOP</h2>
+        <div class="wallet"><i class="coin"></i><b id="sCoins">0</b></div>
+      </div>
+      <h3>SKINS</h3>
+      <div id="skinGrid" class="grid"></div>
+      <h3>UPGRADES</h3>
+      <div id="upgrades" class="upgrades"></div>
+      <div class="actions">
+        <button class="btn" data-act="back">BACK</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>
