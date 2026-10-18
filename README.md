@@ -19,7 +19,11 @@ A bigger take on the classic offline dinosaur game. It's pure HTML5 canvas and v
 - **5 power-ups:** Shield, Coin Magnet, Slow-mo, Double Jump and 2× Score.
 - **Coins:** spend them on upgrades. Progress is saved in the browser.
 - **Better controls:** variable-height jumps, fast-fall, and a jump buffer.
-- Retro synth sound effects, particles, screen shake and parallax backgrounds.
+- **Music from Spotify:** tap **♫ MUSIC** to open the built-in Spotify player.
+  - One-tap playlists: Top Gaming Tracks, Lofi Beats, Jazz Vibes and Peaceful Piano. You can also paste any Spotify playlist, album or song link.
+  - Music keeps playing when the panel is hidden.
+  - Spotify plays full songs if you're logged in to Spotify in the browser, and 30-second previews if you're not.
+- Retro synth sound effects (♪ toggles them), particles, screen shake and parallax backgrounds.
 - **Mobile friendly:** on-screen JUMP and DUCK buttons on touch devices.
 
 ## Controls
@@ -47,6 +51,7 @@ python3 -m http.server 8000
 - `game.js`: the game engine (physics, spawning, rendering, audio, shop, save data)
 - `characters.js`: the character roster and the chibi pixel-art generator
 - `venues.js`: venue colours, obstacles, weather and scenery styles
+- `music.js`: the Spotify music panel
 
 ## Fan art notice
 

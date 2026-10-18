@@ -17,7 +17,8 @@
     <div class="topbar">
       <h1 class="brand">DINO<span>RUSH</span></h1>
       <div class="tools">
-        <button id="btnMute" class="icon-btn" aria-label="Toggle sound" title="Sound (M)">♪</button>
+        <button id="btnMusic" class="icon-btn music-btn" aria-label="Music from Spotify" title="Music from Spotify">♫ MUSIC</button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle sound effects" title="Sound effects (M)">♪</button>
         <button id="btnPause" class="icon-btn" aria-label="Pause" title="Pause (P)">II</button>
       </div>
     </div>
@@ -25,6 +26,21 @@
     <div class="stage">
       <canvas id="game" width="960" height="360" aria-label="Dino Rush game"></canvas>
     </div>
+
+    <section id="music" class="music hidden" aria-label="Spotify music">
+      <div class="music-head">
+        <b>♫ MUSIC <span>via Spotify</span></b>
+        <button id="musicClose" class="mclose" title="Hide (music keeps playing)">HIDE</button>
+      </div>
+      <div class="mchips" id="musicPresets"></div>
+      <form id="musicForm" class="music-form">
+        <input id="musicLink" type="text" placeholder="Paste a Spotify playlist, album or song link" autocomplete="off" spellcheck="false">
+        <button class="btn" type="submit">LOAD</button>
+      </form>
+      <p id="musicErr" class="music-err hidden">That doesn't look like a Spotify link. Copy it from Share → Copy link in Spotify.</p>
+      <div id="musicFrame" class="music-frame"></div>
+      <p class="music-note">Press play in the player. Log in to Spotify in this browser to hear full songs; otherwise Spotify plays 30-second previews.</p>
+    </section>
 
     <div class="touch" id="touch">
       <button id="tDuck" class="touch-btn">▼ DUCK</button>
@@ -93,7 +109,7 @@
       <p class="sub" id="oZone"></p>
       <div class="actions">
         <button class="btn primary" data-act="play">PLAY AGAIN</button>
-        <button class="btn" data-act="shop">SHOP</button>
+        <button class="btn" data-act="shop">CHARACTERS</button>
         <button class="btn" data-act="menu">MENU</button>
       </div>
       <p class="press">press SPACE to retry</p>
@@ -136,5 +152,6 @@
   <script src="characters.js"></script>
   <script src="venues.js"></script>
   <script src="game.js"></script>
+  <script src="music.js"></script>
 </body>
 </html>
