@@ -9,4 +9,4 @@
  *
  * The Client ID is public by design (PKCE has no secret), so it is safe to commit.
  * Leave it empty to hide the login and keep only the embedded player. */
-window.DINO_SPOTIFY_CLIENT_ID = '';
+window.DINO_SPOTIFY_CLIENT_ID = '665de780200a4ab0b9c6d0d15bfd9904';
