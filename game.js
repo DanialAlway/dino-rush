@@ -1477,7 +1477,7 @@
   const DUCK_KEYS = ['ArrowDown', 'KeyS'];
 
   window.addEventListener('keydown', e => {
-    if (e.target.closest && e.target.closest('input, textarea')) return; // typing a music link
+    if (e.target.closest && e.target.closest('input, textarea, select')) return; // typing a music link
     const isJump = JUMP_KEYS.includes(e.code), isDuck = DUCK_KEYS.includes(e.code);
     if (isJump || isDuck) e.preventDefault();
     if (isJump || e.code === 'Enter') {
@@ -1494,7 +1494,7 @@
     if (e.code === 'KeyM') toggleMute();
   });
   window.addEventListener('keyup', e => {
-    if (e.target.closest && e.target.closest('input, textarea')) return;
+    if (e.target.closest && e.target.closest('input, textarea, select')) return;
     if (JUMP_KEYS.includes(e.code)) jumpRelease();
     if (DUCK_KEYS.includes(e.code)) input.duck = false;
   });

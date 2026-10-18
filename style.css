@@ -360,3 +360,31 @@ body.is-touch .press { display: none; }
 .music-frame iframe { display: block; width: 100%; height: 152px; border: 0; border-radius: 12px; }
 .music-note { color: var(--muted); font-size: 7px; line-height: 1.8; margin: 10px 0 0; }
 @media (max-width: 560px) { .icon-btn.music-btn { font-size: 8px; padding: 0 8px; } }
+
+/* ---------- Spotify account ---------- */
+.mtabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.mtab { flex: 1; font: inherit; font-size: 8px; padding: 10px 6px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--muted); cursor: pointer; }
+.mtab.on { border-color: #1db954; color: #1db954; }
+.btn.sp-login { width: 100%; margin-top: 12px; background: #1db954; border-color: #1db954; color: #04130a; }
+.sp-user { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--accent-2); margin-bottom: 12px; gap: 8px; }
+.sp-user > span:last-child { display: flex; gap: 6px; }
+.sp-now { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: var(--panel-2); }
+.sp-now img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; flex: none; }
+.sp-meta { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sp-meta b { font-size: 9px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-meta span { font-size: 7px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.sp-controls .mchip { min-width: 44px; font-size: 10px; }
+.sp-controls input[type=range] { flex: 1; accent-color: #1db954; min-width: 0; }
+.sp-device { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 7px; color: var(--muted); }
+.sp-device select { flex: 1; min-width: 0; font: inherit; font-size: 8px; padding: 8px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--ink); }
+.sp-h { font-size: 8px; color: var(--muted); margin: 14px 0 8px; }
+.sp-lists { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; max-height: 220px; overflow-y: auto; }
+.sp-list { display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; font: inherit; color: var(--ink); border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); cursor: pointer; min-width: 0; }
+.sp-list.on { border-color: #1db954; }
+.sp-cover { width: 36px; height: 36px; flex: none; border-radius: 4px; overflow: hidden; display: grid; place-items: center; background: #333; font-size: 12px; }
+.sp-cover.liked { background: linear-gradient(135deg, #450af5, #c4efd9); color: #fff; }
+.sp-cover img { width: 100%; height: 100%; object-fit: cover; }
+.sp-ltext { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.sp-ltext b { font-size: 7px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-ltext small { font-size: 6px; color: var(--muted); }

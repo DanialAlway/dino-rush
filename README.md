@@ -23,6 +23,7 @@ A bigger take on the classic offline dinosaur game. It's pure HTML5 canvas and v
   - One-tap playlists: Top Gaming Tracks, Lofi Beats, Jazz Vibes and Peaceful Piano. You can also paste any Spotify playlist, album or song link.
   - Music keeps playing when the panel is hidden.
   - Spotify plays full songs if you're logged in to Spotify in the browser, and 30-second previews if you're not.
+  - **MY SPOTIFY tab (optional):** log in with your Spotify account to see your own playlists and liked songs. You can play, pause, skip and change the volume, and choose where the music plays: inside the game on a desktop browser, or on your phone or computer. Spotify only allows up to 5 approved Premium accounts for apps like this (setup below).
 - Retro synth sound effects (♪ toggles them), particles, screen shake and parallax backgrounds.
 - **Mobile friendly:** on-screen JUMP and DUCK buttons on touch devices.
 
@@ -51,7 +52,20 @@ python3 -m http.server 8000
 - `game.js`: the game engine (physics, spawning, rendering, audio, shop, save data)
 - `characters.js`: the character roster and the chibi pixel-art generator
 - `venues.js`: venue colours, obstacles, weather and scenery styles
-- `music.js`: the Spotify music panel
+- `music.js`: the Spotify music panel (embedded player)
+- `spotify.js`, `spotify-config.js`: optional Log in with Spotify (PKCE, Web API, Web Playback SDK)
+
+## Spotify login setup
+
+The game works without this. These steps only switch on the **MY SPOTIFY** tab.
+
+1. Open the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and click **Create app**. The app owner needs Spotify Premium.
+2. Set the **Redirect URI** to `https://danialalway.github.io/dino-rush/`. To test locally as well, also add `http://127.0.0.1:8000/`.
+3. Under **Which API/SDKs**, tick **Web API** and **Web Playback SDK**, then save.
+4. Copy the **Client ID** into `spotify-config.js`. It is public by design and has no secret, so it is safe to commit.
+5. Under **User Management**, add the name and email of each Spotify account allowed to log in. Spotify allows at most 5 in development mode.
+
+Everything runs in the browser using Spotify's PKCE login. There is no server and nothing is stored except your login token, which stays in your own browser.
 
 ## Fan art notice
 

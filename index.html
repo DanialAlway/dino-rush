@@ -32,14 +32,51 @@
         <b>♫ MUSIC <span>via Spotify</span></b>
         <button id="musicClose" class="mclose" title="Hide (music keeps playing)">HIDE</button>
       </div>
-      <div class="mchips" id="musicPresets"></div>
-      <form id="musicForm" class="music-form">
-        <input id="musicLink" type="text" placeholder="Paste a Spotify playlist, album or song link" autocomplete="off" spellcheck="false">
-        <button class="btn" type="submit">LOAD</button>
-      </form>
-      <p id="musicErr" class="music-err hidden">That doesn't look like a Spotify link. Copy it from Share → Copy link in Spotify.</p>
-      <div id="musicFrame" class="music-frame"></div>
-      <p class="music-note">Press play in the player. Log in to Spotify in this browser to hear full songs; otherwise Spotify plays 30-second previews.</p>
+      <div class="mtabs" id="mtabs">
+        <button class="mtab on" data-tab="embed">PLAYLISTS</button>
+        <button class="mtab" data-tab="account">MY SPOTIFY</button>
+      </div>
+
+      <div id="paneEmbed">
+        <div class="mchips" id="musicPresets"></div>
+        <form id="musicForm" class="music-form">
+          <input id="musicLink" type="text" placeholder="Paste a Spotify playlist, album or song link" autocomplete="off" spellcheck="false">
+          <button class="btn" type="submit">LOAD</button>
+        </form>
+        <p id="musicErr" class="music-err hidden">That doesn't look like a Spotify link. Copy it from Share → Copy link in Spotify.</p>
+        <div id="musicFrame" class="music-frame"></div>
+        <p class="music-note">Press play in the player. Log in to Spotify in this browser to hear full songs; otherwise Spotify plays 30-second previews.</p>
+      </div>
+
+      <div id="paneAccount" class="hidden">
+        <div id="spLoggedOut">
+          <p class="music-note">Log in to see your own playlists and liked songs, and control your music from the game. Needs Spotify Premium. Spotify only allows accounts that Danial has approved (5 max).</p>
+          <button id="spLogin" class="btn sp-login">LOG IN WITH SPOTIFY</button>
+        </div>
+        <div id="spLoggedIn" class="hidden">
+          <div class="sp-user">
+            <span id="spName"></span>
+            <span>
+              <button id="spRefresh" class="mclose" title="Reload devices and playlists">↻</button>
+              <button id="spLogout" class="mclose">LOG OUT</button>
+            </span>
+          </div>
+          <div class="sp-now">
+            <img id="spArt" class="hidden" alt="">
+            <div class="sp-meta"><b id="spTrack">Nothing playing</b><span id="spArtist">Pick a playlist below</span></div>
+          </div>
+          <div class="sp-controls">
+            <button id="spPrev" class="mchip" aria-label="Previous">⏮</button>
+            <button id="spPlay" class="mchip" aria-label="Play or pause">▶</button>
+            <button id="spNext" class="mchip" aria-label="Next">⏭</button>
+            <input id="spVol" type="range" min="0" max="100" value="60" aria-label="Volume">
+          </div>
+          <label class="sp-device">PLAY ON <select id="spDevice"></select></label>
+          <h4 class="sp-h">YOUR PLAYLISTS</h4>
+          <div id="spLists" class="sp-lists"></div>
+        </div>
+        <p id="spMsg" class="music-err hidden"></p>
+      </div>
     </section>
 
     <div class="touch" id="touch">
@@ -153,5 +190,7 @@
   <script src="venues.js"></script>
   <script src="game.js"></script>
   <script src="music.js"></script>
+  <script src="spotify-config.js"></script>
+  <script src="spotify.js"></script>
 </body>
 </html>

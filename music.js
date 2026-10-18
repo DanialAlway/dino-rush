@@ -84,6 +84,7 @@
     choose(uri);
   });
 
+  window.DinoMusic = { open: () => setOpen(true) };
   renderPresets();
   setOpen(prefs.open);
 })();
