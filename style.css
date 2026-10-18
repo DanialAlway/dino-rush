@@ -307,3 +307,5 @@ body.is-touch .press { display: none; }
 .venue .price { font-size: 7px; color: var(--accent); }
 .venue.equipped .price { color: var(--accent-2); }
 .venue.locked .price { color: var(--muted); }
+.tag.fan { margin-top: 16px; font-size: 7px; }
+.card h3 small { color: var(--muted); font-size: 8px; }

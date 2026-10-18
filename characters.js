@@ -2,9 +2,11 @@
  * Each one is a chibi built by a small pixel-art generator: big head, tiny body,
  * two-frame run, and a squished duck pose. All characters are original designs.
  *
- * Palette letters: '#' body  'w' light patch  'o' outline  'e' eyes/dark  'p' cheeks
+ * Palette letters: '#' body/outfit  'w' light patch  'o' outline  'e' eyes/dark  'p' cheeks
  *                  'i' inner ear  'a' accent  'd' dark marks  't' teeth  'm' mane
- *                  's' sprout  'f' feet */
+ *                  's' sprout  'f' feet  'k' skin  'h' hair  'b' tears  'r' lips  'x' eye shine
+ *
+ * The POP MART group is fan art of Pop Mart characters; it is not affiliated with Pop Mart. */
 window.DinoCharacters = (() => {
   'use strict';
 
@@ -33,6 +35,28 @@ window.DinoCharacters = (() => {
   // Generator
   // ---------------------------------------------------------------------------
   const HEAD_TOP = { bunny: 6, monster: 4, horn: 3, antenna: 3 };
+  const HAIR_TOP = { cloud: 4, messy: 4, spiky: 4, bun: 4 };
+
+  // Hair for human characters: a cap over the head plus a style on top.
+  function hair(g, style, T) {
+    for (let y = T - 1; y <= T + 2; y++) {
+      for (let x = 4; x <= 20; x++) {
+        const dx = (x - 12) / 7.1, dy = (y - (T + 4.5)) / 5.7;
+        if (dx * dx + dy * dy <= 1) set(g, x, y, 'h');
+      }
+    }
+    for (let y = T + 3; y <= T + 7; y++) for (let x = 5; x <= 8; x++) if (g[y][x] === 'k') set(g, x, y, 'h');
+    const px = pts => pts.forEach(([x, y]) => set(g, x, y, 'h'));
+    switch (style) {
+      case 'long': for (let y = T + 3; y <= T + 13; y++) for (const x of [4, 5, 6]) set(g, x, y, 'h'); break;
+      case 'messy': px([[8, T - 2], [11, T - 2], [14, T - 2], [10, T - 3], [16, T - 1], [17, T], [6, T]]); break;
+      case 'spiky': px([[7, T - 2], [9, T - 3], [12, T - 4], [15, T - 3], [17, T - 2], [11, T - 2], [13, T - 2], [8, T - 2], [14, T - 2]]); break;
+      case 'cloud':
+        for (const [cx, cy, rx, ry] of [[7.5, T + 0.5, 3.2, 2.6], [12, T - 1, 3.8, 2.6], [16.5, T + 0.5, 3.2, 2.6], [5.5, T + 3.2, 2.4, 2.6]]) ellipse(g, cx, cy, rx, ry, 'h');
+        break;
+      case 'bun': ellipse(g, 11, T - 1.8, 2, 1.6, 'h'); break;
+    }
+  }
 
   function ears(g, type, T, ch) {
     const px = (pts, c = ch) => pts.forEach(([x, y]) => set(g, x, y, c));
@@ -106,7 +130,7 @@ window.DinoCharacters = (() => {
   }
 
   function chibi(o) {
-    const T = HEAD_TOP[o.ears] ?? 2;
+    const T = HEAD_TOP[o.ears] ?? HAIR_TOP[o.hair] ?? (o.beret ? 3 : 2);
     const W = 23, H = T + 16;
     const base = make(W, H);
     const earCh = o.earChar || '#';
@@ -114,7 +138,7 @@ window.DinoCharacters = (() => {
     ears(base, o.ears, T, earCh);
     tail(base, o.tail, T);
     ellipse(base, 11, T + 11.5, 5, 3, '#');           // body
-    ellipse(base, 12, T + 4.5, 6.6, 5.2, '#');        // head
+    ellipse(base, 12, T + 4.5, 6.6, 5.2, o.human ? 'k' : '#');   // head
     if (o.ears === 'frog') ears(base, 'frog', T, earCh);
 
     if (o.face) ellipse(base, 13.5, T + 5.5, 4.6, 3.6, 'w');
@@ -126,17 +150,25 @@ window.DinoCharacters = (() => {
     if (o.gills) for (const [x, y] of [[4, T + 1], [5, T + 2], [3, T + 3], [4, T + 3], [5, T + 4], [4, T + 6], [5, T + 6]]) set(base, x, y, 'a');
     if (o.muzzle) ellipse(base, 16.4, T + 6.6, 2.3, 1.3, 'w');
     if (o.patches) { ellipse(base, 14, T + 4.6, 1.2, 1.7, 'd'); ellipse(base, 17, T + 4.6, 1.2, 1.7, 'd'); }
+    if (o.hair) hair(base, o.hair, T);
+    if (o.beret) { ellipse(base, 10.5, T - 0.6, 5.5, 1.5, 'a'); set(base, 10, T - 2, 'a'); }
     if (o.bow) [[10, T - 1], [11, T - 1], [13, T - 1], [14, T - 1], [10, T], [11, T], [12, T], [13, T], [14, T], [10, T + 1], [14, T + 1]]
       .forEach(([x, y]) => set(base, x, y, 'a'));
 
     // Face (looking right)
     const side = o.muzzle || o.snout || o.beak;
     if (o.ears === 'frog') { set(base, 14, T, 'e'); set(base, 17, T, 'e'); }
+    else if (o.bigEyes) {
+      for (const x of [13, 14, 16, 17]) for (const y of [T + 4, T + 5]) set(base, x, y, 'e');
+      set(base, 14, T + 4, 'x'); set(base, 17, T + 4, 'x');
+    } else if (o.closedEyes) [[13, T + 5], [14, T + 5], [16, T + 5], [17, T + 5]].forEach(([x, y]) => set(base, x, y, 'e'));
+    else if (o.smallEyes) { set(base, 14, T + 5, 'e'); set(base, 17, T + 5, 'e'); }
     else {
       const eye = o.patches ? 'w' : 'e';
       for (const x of [14, 17]) { set(base, x, T + 4, eye); if (!o.patches) set(base, x, T + 5, eye); }
     }
     if (o.cheeks !== false) { set(base, 13, T + 6, 'p'); if (!side) set(base, 18, T + 6, 'p'); }
+    if (o.tears) [[13, T + 6], [13, T + 7], [16, T + 6], [16, T + 7], [13, T + 8]].forEach(([x, y]) => set(base, x, y, 'b'));
     if (o.snout) {
       for (const x of [15, 16, 17, 18]) { set(base, x, T + 6, 'i'); set(base, x, T + 7, 'i'); }
       set(base, 16, T + 7, 'e'); set(base, 17, T + 7, 'e');
@@ -151,6 +183,7 @@ window.DinoCharacters = (() => {
         set(base, 15, T + 7, 'e'); set(base, 16, T + 7, 'e');
         break;
       case 'wide': for (let x = 14; x <= 18; x++) set(base, x, T + 6, 'e'); break;
+      case 'pout': set(base, 15, T + 7, 'r'); break;
     }
 
     // Legs: stand, and two run frames.
@@ -180,6 +213,23 @@ window.DinoCharacters = (() => {
   // Roster
   // ---------------------------------------------------------------------------
   const DEFS = [
+    // Pop Mart (fan art)
+    { id: 'labubu', name: 'LABUBU', group: 'popmart', ears: 'monster', face: true, mouth: 'grin', pal: { '#': '#a3784e', w: '#f6e3c8', i: '#f5a0b4' } },
+    { id: 'mokoko', name: 'MOKOKO', group: 'popmart', ears: 'monster', face: true, mouth: 'grin', pal: { '#': '#f7a8c4', w: '#fff1f5', i: '#ff7fa6' } },
+    { id: 'zimomo', name: 'ZIMOMO', group: 'popmart', ears: 'monster', face: true, mouth: 'grin', tail: 'cat', pal: { '#': '#6e4a32', w: '#e9d2b4', i: '#e98aa0' } },
+    { id: 'molly', name: 'MOLLY', group: 'popmart', human: true, hair: 'bob', beret: true, bigEyes: true, mouth: 'pout', pal: { '#': '#f2e6cf', h: '#f2c14e', a: '#d83a3a', e: '#2fa7a3' } },
+    { id: 'dimoo', name: 'DIMOO', group: 'popmart', human: true, hair: 'cloud', smallEyes: true, pal: { '#': '#9cc7f0', h: '#f7f7fb', o: '#5b6f91' } },
+    { id: 'skullpanda', name: 'SKULLPANDA', group: 'popmart', ears: 'bear', face: true, bigEyes: true, cheeks: false, mouth: 'none', pal: { '#': '#f2f2f2', w: '#2b2b33', e: '#ffffff', i: '#2b2b33', x: '#9fd8ff' } },
+    { id: 'crybaby', name: 'CRYBABY', group: 'popmart', ears: 'bunny', face: true, bigEyes: true, tears: true, mouth: 'pout', pal: { '#': '#ffb3c8', w: '#ffe8de', i: '#ff8fb1', e: '#3a2a3a' } },
+    { id: 'hirono', name: 'HIRONO', group: 'popmart', human: true, hair: 'messy', smallEyes: true, cheeks: false, mouth: 'none', pal: { '#': '#6b7a8f', h: '#2b2724', k: '#f8ece4' } },
+    { id: 'pucky', name: 'PUCKY', group: 'popmart', ears: 'sprout', face: true, bigEyes: true, mouth: 'pout', pal: { '#': '#8fd1a8', w: '#fff0e6', s: '#4caf6a', e: '#1f1f1f' } },
+    { id: 'hacipupu', name: 'HACIPUPU', group: 'popmart', ears: 'bear', face: true, bigEyes: true, pal: { '#': '#c9925f', w: '#ffe9dc', i: '#f2b8a0' } },
+    { id: 'sweetbean', name: 'SWEET BEAN', group: 'popmart', human: true, hair: 'messy', smallEyes: true, pal: { '#': '#ffffff', h: '#b07a46', o: '#5a4a40' } },
+    { id: 'popbunny', name: 'BUNNY', group: 'popmart', ears: 'bunny', bow: true, tail: 'puff', pal: { '#': '#fff4e6', a: '#e8456f' } },
+    { id: 'yoki', name: 'YOKI', group: 'popmart', ears: 'monster', belly: true, pal: { '#': '#5a4a6e', w: '#cdbfe0', i: '#9b86c0', e: '#ffe066' } },
+    { id: 'duckoo', name: 'DUCKOO', group: 'popmart', beak: true, closedEyes: true, cheeks: false, pal: { '#': '#ffffff', a: '#ffa733', f: '#ffa733' } },
+    { id: 'azura', name: 'AZURA', group: 'popmart', human: true, hair: 'long', bigEyes: true, pal: { '#': '#e6eeff', h: '#a9d4f5', e: '#4a6fd0' } },
+    { id: 'peachriot', name: 'PEACH RIOT', group: 'popmart', human: true, hair: 'spiky', pal: { '#': '#2a2a2a', h: '#ff6fa8', f: '#ffffff' } },
     // Animals
     { id: 'dumpling', name: 'DUMPLING', price: 60, group: 'cute', ears: 'sprout', pal: { '#': '#fff2dc' } },
     { id: 'duckling', name: 'DUCKLING', price: 70, group: 'animal', ears: 'sprout', beak: true, pal: { '#': '#ffd84a', a: '#ff9a2b', f: '#ff9a2b', s: '#ffd84a' } },
@@ -213,8 +263,9 @@ window.DinoCharacters = (() => {
     const palette = Object.assign({
       o: '#3a2f2f', e: '#2a2222', p: '#ff9db5', i: '#ffb7c9', w: '#ffffff', t: '#ffffff',
       a: '#ff4d7d', s: '#5cbf60', m: '#c99bff', d: shade(body, 0.72), f: body,
+      k: '#ffe2d0', h: '#3a2a22', b: '#5fb8ff', r: '#e0525e', x: '#ffffff',
     }, d.pal);
-    return { id: d.id, name: d.name, price: d.price, group: d.group, palette, frames: chibi(d), color: body };
+    return { id: d.id, name: d.name, group: d.group, palette, frames: chibi(d), color: body };
   });
 
   return { list };

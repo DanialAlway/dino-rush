@@ -99,7 +99,7 @@
     { id: 'rainbow', name: 'RAINBOW', price: 900, rainbow: true },
   ].map(s => Object.assign(s, { group: 'dino' }));
   const SKINS = DINO_SKINS.concat(window.DinoCharacters.list);
-  const SKIN_GROUPS = [['dino', 'DINOS'], ['animal', 'ANIMALS'], ['cute', 'CUTIES']];
+  const SKIN_GROUPS = [['dino', 'DINOS'], ['popmart', 'POP MART'], ['cute', 'CUTIES'], ['animal', 'ANIMALS']];
 
   const BIOMES = window.DinoVenues;
   const ZONE_LEN = 600; // points per venue
@@ -138,6 +138,7 @@
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ }
   }
   const save = loadSave();
+  save.venues = BIOMES.map((_, i) => i); // every venue is open
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -1295,7 +1296,7 @@
     Object.assign(biome, { cur: sv, prev: sv, start: sv, blend: 1, banner: 0 });
     $('mBest').textContent = save.best;
     $('mCoins').textContent = save.coins;
-    $('mVenue').textContent = `Venue: ${BIOMES[sv].name} · ${save.venues.length}/${BIOMES.length} unlocked`;
+    $('mVenue').textContent = `Runner: ${currentSkin().name} · Venue: ${BIOMES[sv].name}`;
     show('menu');
   }
 
@@ -1340,14 +1341,14 @@
       const skins = SKINS.filter(s => s.group === group);
       const head = document.createElement('h4');
       head.className = 'group-title';
-      head.textContent = `${label} · ${skins.filter(s => save.owned.includes(s.id)).length}/${skins.length}`;
+      head.textContent = `${label} · ${skins.length}`;
       const gridEl = document.createElement('div');
       gridEl.className = 'grid';
       wrap.append(head, gridEl);
       for (const s of skins) {
-      const owned = save.owned.includes(s.id), eq = save.skin === s.id;
+      const eq = save.skin === s.id;
       const card = document.createElement('button');
-      card.className = 'skin' + (eq ? ' equipped' : '') + (!owned && save.coins < s.price ? ' locked' : '');
+      card.className = 'skin' + (eq ? ' equipped' : '');
       card.dataset.skin = s.id;
       const cv = document.createElement('canvas');
       cv.width = 120; cv.height = 90;
@@ -1357,7 +1358,7 @@
       name.textContent = s.name;
       const price = document.createElement('div');
       price.className = 'price';
-      price.textContent = eq ? 'EQUIPPED' : owned ? 'EQUIP' : '● ' + s.price;
+      price.textContent = eq ? 'SELECTED' : 'SELECT';
       card.append(cv, name, price);
       gridEl.append(card);
       }
@@ -1403,7 +1404,7 @@
         <div class="price">${save.startVenue === i ? 'SELECTED' : open ? 'START HERE' : '🔒 REACH IN A RUN'}</div>`;
       el.append(card);
     });
-    $('vCount').textContent = `${save.venues.length}/${BIOMES.length}`;
+    $('vCount').textContent = BIOMES.length;
   }
 
   function openShop() {
@@ -1411,16 +1412,10 @@
     show('shop');
   }
 
-  function buySkin(id, el) {
-    const s = SKINS.find(x => x.id === id);
-    if (!s) return;
-    if (save.owned.includes(id)) { save.skin = id; sfx.coin(); }
-    else if (save.coins >= s.price) {
-      save.coins -= s.price;
-      save.owned.push(id);
-      save.skin = id;
-      sfx.buy();
-    } else { nope(el); return; }
+  function buySkin(id) {
+    if (!SKINS.some(x => x.id === id)) return;
+    save.skin = id;
+    sfx.coin();
     persist();
     renderShop();
   }

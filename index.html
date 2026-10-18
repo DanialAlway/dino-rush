@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dino Rush</title>
-  <meta name="description" content="Dino Rush: a bigger take on the classic offline dinosaur game, with 17 venues, 31 characters, power-ups and coins.">
+  <meta name="description" content="Dino Rush: a bigger take on the classic offline dinosaur game, with 17 venues, 48 characters, power-ups and coins.">
   <meta name="theme-color" content="#0e1020">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,16 +46,17 @@
       <div class="actions">
         <button class="btn primary" data-act="play">PLAY</button>
         <button class="btn" data-act="venues">VENUES</button>
-        <button class="btn" data-act="shop">CHARACTERS &amp; SHOP</button>
+        <button class="btn" data-act="shop">CHARACTERS</button>
         <button class="btn" data-act="help">HOW TO PLAY</button>
       </div>
       <p class="sub" id="mVenue"></p>
       <div id="help" class="help hidden">
         <p><b>JUMP</b> Space, ↑ or tap. Hold for a higher jump.</p>
         <p><b>DUCK</b> ↓ ducks under pterodactyls. Press it in the air to drop fast.</p>
-        <p><b>VENUES</b> 17 places to run through, from Desert Dunes and Candy Land to Neon City and Moon Base. The venue changes every 600 points. Reach a venue once to unlock it as a starting point.</p>
+        <p><b>VENUES</b> 17 places to run through, from Desert Dunes and Candy Land to Neon City and Moon Base. The venue changes every 600 points, and you can start in any of them.</p>
         <p><b>DANGERS</b> Cacti, castles, candy, cones, pumpkins, crystals and more, plus pterodactyls, rolling boulders and falling meteors.</p>
-        <p><b>CHARACTERS</b> 31 to collect: dinos, animals and cuties.</p>
+        <p><b>CHARACTERS</b> 48 to choose from, all free: dinos, Pop Mart friends, cuties and animals.</p>
+        <p><b>COINS</b> Spend them on upgrades.</p>
         <p><b>POWER-UPS</b>
           <span class="pw" style="--c:#3fa9f5">S</span> Shield
           <span class="pw" style="--c:#e8463b">M</span> Magnet
@@ -63,7 +64,6 @@
           <span class="pw" style="--c:#2ecc71">J</span> Double jump
           <span class="pw" style="--c:#f5b700">2</span> 2× score
         </p>
-        <p><b>COINS</b> Spend them in the shop on skins and upgrades.</p>
       </div>
       <p class="press">press SPACE to start</p>
     </div>
@@ -104,12 +104,13 @@
   <section id="shop" class="overlay hidden">
     <div class="card wide">
       <div class="shop-head">
-        <h2 class="title">SHOP</h2>
+        <h2 class="title">CHARACTERS</h2>
         <div class="wallet"><i class="coin"></i><b id="sCoins">0</b></div>
       </div>
-      <h3>CHARACTERS</h3>
+      <h3>PICK YOUR RUNNER</h3>
       <div id="skinGrid"></div>
-      <h3>UPGRADES</h3>
+      <p class="tag fan">Pop Mart characters are unofficial pixel fan art. Dino Rush is not affiliated with Pop Mart.</p>
+      <h3>UPGRADES <small>(cost coins)</small></h3>
       <div id="upgrades" class="upgrades"></div>
       <div class="actions">
         <button class="btn" data-act="back">BACK</button>
@@ -124,7 +125,7 @@
         <h2 class="title">VENUES</h2>
         <div class="wallet"><b id="vCount">0</b></div>
       </div>
-      <p class="tag">Pick where your run starts. Reach new venues in a run to unlock them.</p>
+      <p class="tag">Pick where your run starts. The venue changes every 600 points.</p>
       <div id="venueGrid" class="grid venues"></div>
       <div class="actions">
         <button class="btn" data-act="back">BACK</button>
