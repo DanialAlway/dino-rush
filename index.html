@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dino Rush</title>
-  <meta name="description" content="Dino Rush: a bigger take on the classic offline dinosaur game, with biomes, day and night, power-ups, coins and skins.">
+  <meta name="description" content="Dino Rush: a bigger take on the classic offline dinosaur game, with 17 venues, 31 characters, power-ups and coins.">
   <meta name="theme-color" content="#0e1020">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,14 +45,17 @@
       </div>
       <div class="actions">
         <button class="btn primary" data-act="play">PLAY</button>
-        <button class="btn" data-act="shop">SHOP</button>
+        <button class="btn" data-act="venues">VENUES</button>
+        <button class="btn" data-act="shop">CHARACTERS &amp; SHOP</button>
         <button class="btn" data-act="help">HOW TO PLAY</button>
       </div>
+      <p class="sub" id="mVenue"></p>
       <div id="help" class="help hidden">
         <p><b>JUMP</b> Space, ↑ or tap. Hold for a higher jump.</p>
         <p><b>DUCK</b> ↓ ducks under pterodactyls. Press it in the air to drop fast.</p>
-        <p><b>ZONES</b> Every 1000 points: Desert → Plains → Tundra → Volcano.</p>
-        <p><b>DANGERS</b> Cacti, ice spikes, rocks, pterodactyls, rolling boulders and falling meteors.</p>
+        <p><b>VENUES</b> 17 places to run through, from Desert Dunes and Candy Land to Neon City and Moon Base. The venue changes every 600 points. Reach a venue once to unlock it as a starting point.</p>
+        <p><b>DANGERS</b> Cacti, castles, candy, cones, pumpkins, crystals and more, plus pterodactyls, rolling boulders and falling meteors.</p>
+        <p><b>CHARACTERS</b> 31 to collect: dinos, animals and cuties.</p>
         <p><b>POWER-UPS</b>
           <span class="pw" style="--c:#3fa9f5">S</span> Shield
           <span class="pw" style="--c:#e8463b">M</span> Magnet
@@ -104,8 +107,8 @@
         <h2 class="title">SHOP</h2>
         <div class="wallet"><i class="coin"></i><b id="sCoins">0</b></div>
       </div>
-      <h3>SKINS</h3>
-      <div id="skinGrid" class="grid"></div>
+      <h3>CHARACTERS</h3>
+      <div id="skinGrid"></div>
       <h3>UPGRADES</h3>
       <div id="upgrades" class="upgrades"></div>
       <div class="actions">
@@ -114,6 +117,23 @@
     </div>
   </section>
 
+  <!-- Venues -->
+  <section id="venues" class="overlay hidden">
+    <div class="card wide">
+      <div class="shop-head">
+        <h2 class="title">VENUES</h2>
+        <div class="wallet"><b id="vCount">0</b></div>
+      </div>
+      <p class="tag">Pick where your run starts. Reach new venues in a run to unlock them.</p>
+      <div id="venueGrid" class="grid venues"></div>
+      <div class="actions">
+        <button class="btn" data-act="back">BACK</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="characters.js"></script>
+  <script src="venues.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

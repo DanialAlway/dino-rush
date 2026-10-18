@@ -271,3 +271,39 @@ body.is-touch .press { display: none; }
   .grid { grid-template-columns: repeat(2, 1fr); }
   .upgrade { flex-wrap: wrap; }
 }
+
+/* ---------- Character groups & venues ---------- */
+.group-title { font-size: 9px; color: var(--accent); margin: 18px 0 10px; letter-spacing: 1px; }
+.group-title:first-child { margin-top: 0; }
+#venues .tag { margin: 8px 0 16px; }
+
+.venue {
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background: var(--panel-2);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 8px 12px;
+  cursor: pointer;
+}
+.venue:hover { border-color: #444b80; }
+.venue.equipped { border-color: var(--accent-2); }
+.venue.locked { cursor: not-allowed; }
+.venue.locked .scene { filter: grayscale(1) brightness(.45); }
+.venue .scene {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--sky);
+}
+.venue .scene i { position: absolute; left: 0; right: 0; display: block; }
+.venue .scene .far { bottom: 22%; height: 34%; background: var(--far); clip-path: polygon(0 60%, 18% 20%, 36% 55%, 55% 10%, 74% 50%, 90% 25%, 100% 45%, 100% 100%, 0 100%); }
+.venue .scene .near { bottom: 22%; height: 18%; background: var(--near); clip-path: polygon(0 50%, 25% 20%, 50% 55%, 75% 15%, 100% 45%, 100% 100%, 0 100%); }
+.venue .scene .obs { left: 62%; right: auto; bottom: 22%; width: 9%; height: 22%; background: var(--obs); border-radius: 3px 3px 0 0; }
+.venue .scene .gnd { bottom: 0; height: 22%; background: var(--ground); }
+.venue .name { font-size: 8px; margin: 10px 0 8px; line-height: 1.5; }
+.venue .price { font-size: 7px; color: var(--accent); }
+.venue.equipped .price { color: var(--accent-2); }
+.venue.locked .price { color: var(--muted); }

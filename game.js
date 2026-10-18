@@ -88,7 +88,7 @@
   // ---------------------------------------------------------------------------
   // Game data
   // ---------------------------------------------------------------------------
-  const SKINS = [
+  const DINO_SKINS = [
     { id: 'classic', name: 'CLASSIC', price: 0, color: '#535353' },
     { id: 'forest', name: 'FOREST', price: 60, color: '#2f8f46' },
     { id: 'ocean', name: 'OCEAN', price: 120, color: '#2b6fd6' },
@@ -97,34 +97,12 @@
     { id: 'gold', name: 'GOLDEN', price: 450, color: '#e0a91b' },
     { id: 'ghost', name: 'GHOST', price: 600, color: '#eef3ff', alpha: 0.6 },
     { id: 'rainbow', name: 'RAINBOW', price: 900, rainbow: true },
-  ];
+  ].map(s => Object.assign(s, { group: 'dino' }));
+  const SKINS = DINO_SKINS.concat(window.DinoCharacters.list);
+  const SKIN_GROUPS = [['dino', 'DINOS'], ['animal', 'ANIMALS'], ['cute', 'CUTIES']];
 
-  const BIOMES = [
-    {
-      name: 'DESERT DUNES', weather: 'dust', obsKind: 'cactus',
-      skyTop: '#f7d9a0', skyBot: '#fdf1d6', nTop: '#141a3a', nBot: '#3a3060',
-      far: '#e8c08a', near: '#d9a868', ground: '#ecd3a0', line: '#8a6a3e', speck: '#b8915a',
-      obs: '#3f7a3a', obsAccent: '#6fb35e', ptero: '#6b5a4a', rock: '#8b6b4a',
-    },
-    {
-      name: 'GREEN PLAINS', weather: 'leaves', obsKind: 'cactus',
-      skyTop: '#8fd3ff', skyBot: '#e2f6ff', nTop: '#0d1630', nBot: '#24345e',
-      far: '#a6cfb0', near: '#6fae6a', ground: '#86c460', line: '#3f6b2c', speck: '#4f8c3a',
-      obs: '#2e6b2a', obsAccent: '#58a34d', ptero: '#535353', rock: '#7d7468',
-    },
-    {
-      name: 'FROZEN TUNDRA', weather: 'snow', obsKind: 'ice',
-      skyTop: '#a9c8e4', skyBot: '#eef6fb', nTop: '#0b1426', nBot: '#2a3d5c',
-      far: '#c9dbe9', near: '#a9c4da', ground: '#f2f7fb', line: '#7d98b0', speck: '#b5cad9',
-      obs: '#3d8fc4', obsAccent: '#bfe8ff', ptero: '#46607a', rock: '#8fa7bf',
-    },
-    {
-      name: 'VOLCANO ZONE', weather: 'ash', obsKind: 'rock',
-      skyTop: '#d9694c', skyBot: '#f6c08a', nTop: '#1a0a10', nBot: '#4a1a1a',
-      far: '#8a4a4a', near: '#5e2f2f', ground: '#4a3434', line: '#1f1414', speck: '#e0612a',
-      obs: '#2a2222', obsAccent: '#ff7a2a', ptero: '#2b1d1d', rock: '#3a2a2a',
-    },
-  ];
+  const BIOMES = window.DinoVenues;
+  const ZONE_LEN = 600; // points per venue
   const COLOR_KEYS = ['skyTop', 'skyBot', 'nTop', 'nBot', 'far', 'near', 'ground', 'line',
     'speck', 'obs', 'obsAccent', 'ptero', 'rock'];
 
@@ -146,7 +124,8 @@
   // Save data (localStorage may be unavailable, so everything is guarded)
   // ---------------------------------------------------------------------------
   function defaults() {
-    return { best: 0, coins: 0, owned: ['classic'], skin: 'classic', dur: 0, startShield: false, games: 0, muted: false };
+    return { best: 0, coins: 0, owned: ['classic'], skin: 'classic', dur: 0, startShield: false, games: 0, muted: false,
+      venues: [0], startVenue: 0 };
   }
   function loadSave() {
     try {
@@ -272,7 +251,134 @@
     return toRows(g);
   }
 
-  const SHAPES = { cactus: makeCactus, ice: makeSpikes, rock: makeRock };
+  // Fixed colours some shapes use on top of the venue's '#' and '+' colours.
+  const FIXED = { O: '#f28a1e', Q: '#b5520c', g: '#4f8a3a', y: '#ffe066', W: '#fff8ec' };
+
+  function makeCastle(big) {
+    const w = big ? 11 : 9, h = big ? 12 : 9, g = grid(w, h);
+    const fill = (x0, x1, y0, y1, c = '#') => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y][x] = c; };
+    fill(0, w - 1, h - 5, h - 1);
+    fill(0, 2, 2, h - 1);
+    fill(w - 3, w - 1, 2, h - 1);
+    for (const x of [0, 2, w - 3, w - 1]) g[1][x] = '#';
+    if (big) { fill(4, 6, 0, h - 1); g[0][5] = ' '; }
+    const mid = Math.floor(w / 2);
+    fill(mid - 1, mid, h - 3, h - 1, '+');
+    g[4][1] = '+'; g[4][w - 2] = '+';
+    return toRows(g);
+  }
+
+  function makeBamboo(big) {
+    const n = big ? 3 : 2, h = big ? 17 : 13, g = grid(n * 3, h);
+    for (let i = 0; i < n; i++) {
+      const top = randInt(0, 3), x = i * 3;
+      for (let y = top; y < h; y++) { g[y][x] = '#'; g[y][x + 1] = (y - top) % 4 === 3 ? '+' : '#'; }
+      if (top + 2 < h && x + 2 < n * 3) g[top + 2][x + 2] = '+';
+    }
+    return toRows(g);
+  }
+
+  function makeTree(big) {
+    const w = big ? 11 : 9, h = big ? 17 : 13, g = grid(w, h), mid = (w - 1) / 2;
+    const trunk = 3, crown = h - trunk;
+    for (let y = 0; y < crown; y++) {
+      const tier = y % Math.ceil(crown / 3);
+      const half = Math.min(mid, 1 + tier + Math.floor(y / Math.ceil(crown / 3)));
+      for (let x = Math.round(mid - half); x <= Math.round(mid + half); x++) g[y][x] = '#';
+    }
+    for (let y = crown; y < h; y++) { g[y][Math.floor(mid)] = '+'; g[y][Math.ceil(mid)] = '+'; }
+    return toRows(g);
+  }
+
+  function makeAcacia(big) {
+    const w = big ? 13 : 11, h = big ? 15 : 12, g = grid(w, h), mid = Math.floor(w / 2);
+    for (let y = 0; y < 3; y++) for (let x = y === 0 ? 2 : 0; x < (y === 0 ? w - 2 : w); x++) g[y][x] = '+';
+    for (let y = 3; y < h; y++) g[y][mid] = '#';
+    g[3][mid - 2] = '#'; g[4][mid - 1] = '#'; g[3][mid + 2] = '#'; g[4][mid + 1] = '#';
+    return toRows(g);
+  }
+
+  function makeCandy(big) {
+    const h = big ? 16 : 12;
+    if (Math.random() < 0.5) {
+      // Lollipop
+      const r = big ? 4 : 3, w = r * 2 + 1, g = grid(w, h);
+      for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+        const d = Math.hypot(x - r, y - r);
+        if (d <= r + 0.3) g[y][x] = Math.round(d + Math.atan2(y - r, x - r) * 0.8) % 2 ? '+' : '#';
+      }
+      for (let y = w; y < h; y++) g[y][r] = '+';
+      return toRows(g);
+    }
+    // Candy cane
+    const w = 6, g = grid(w, h);
+    const hook = [[1, 1], [2, 0], [3, 0], [4, 1], [4, 2], [4, 3]];
+    hook.forEach(([x, y], i) => { g[y][x] = i % 2 ? '+' : '#'; g[y][x + 1] = i % 2 ? '+' : '#'; });
+    for (let y = 1; y < h; y++) { const c = Math.floor(y / 2) % 2 ? '+' : '#'; g[y][0] = c; g[y][1] = c; }
+    return toRows(g);
+  }
+
+  function makeCone(big) {
+    const w = big ? 9 : 7, h = big ? 13 : 10, g = grid(w, h), mid = (w - 1) / 2;
+    for (let y = 0; y < h - 1; y++) {
+      const half = Math.round((y / (h - 1)) * (mid - 1)) + 0.5;
+      for (let x = Math.ceil(mid - half); x <= Math.floor(mid + half); x++) g[y][x] = (y % 4 === 2 || y % 4 === 3) && y > 1 ? '+' : '#';
+    }
+    for (let x = 0; x < w; x++) g[h - 1][x] = '#';
+    return toRows(g);
+  }
+
+  function makeMushroom(big) {
+    const w = big ? 11 : 9, cap = big ? 5 : 4, h = big ? 13 : 10, g = grid(w, h), mid = (w - 1) / 2;
+    for (let y = 0; y < cap; y++) {
+      const half = Math.round(mid * Math.sqrt(1 - Math.pow((cap - 1 - y) / cap, 2)));
+      for (let x = mid - half; x <= mid + half; x++) g[y][x] = '#';
+    }
+    for (const [x, y] of [[mid - 2, 1], [mid + 2, 2], [mid, 0], [1, cap - 1], [w - 2, cap - 1]]) if (g[y] && g[y][x] === '#') g[y][x] = '+';
+    for (let y = cap; y < h; y++) for (let x = mid - 1; x <= mid + 1; x++) g[y][x] = 'W';
+    return toRows(g);
+  }
+
+  function makePumpkin(big) {
+    const w = big ? 11 : 9, body = big ? 8 : 6, h = body + 2, g = grid(w, h), mid = (w - 1) / 2;
+    for (let y = 0; y < body; y++) {
+      const half = Math.round(mid * Math.sqrt(1 - Math.pow((y - (body - 1) / 2) / (body / 2 + 0.4), 2)));
+      for (let x = mid - half; x <= mid + half; x++) g[y + 2][x] = (x === mid - 2 || x === mid + 2) ? 'Q' : 'O';
+    }
+    g[0][mid] = 'g'; g[1][mid] = 'g'; g[0][mid + 1] = 'g';
+    const ey = 2 + Math.floor(body / 3);
+    g[ey][mid - 2] = 'y'; g[ey][mid + 2] = 'y';
+    for (let x = mid - 2; x <= mid + 2; x++) g[ey + 2][x] = 'y';
+    return toRows(g);
+  }
+
+  function makeTomb(big) {
+    const w = big ? 8 : 7, h = big ? 13 : 10, g = grid(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!(y === 0 && (x === 0 || x === w - 1))) g[y][x] = '#';
+    const mid = Math.floor(w / 2);
+    for (let y = 2; y < 7; y++) g[y][mid] = '+';
+    g[3][mid - 1] = '+'; g[3][mid + 1] = '+';
+    for (let x = 0; x < w; x += 2) g[h - 1][x] = 'g';
+    return toRows(g);
+  }
+
+  function makeCrystal(big) {
+    const w = big ? 10 : 7, h = big ? 16 : 12, g = grid(w, h);
+    const peaks = big ? [[2, h - 2], [5, h], [8, Math.round(h * 0.6)]] : [[2, Math.round(h * 0.75)], [4, h]];
+    for (let x = 0; x < w; x++) {
+      let ch = 2;
+      for (const [pc, ph] of peaks) ch = Math.max(ch, ph - Math.abs(x - pc) * 2);
+      ch = Math.min(h, ch);
+      for (let y = h - ch; y < h; y++) g[y][x] = peaks.some(([pc]) => pc - 1 === x) ? '+' : '#';
+    }
+    return toRows(g);
+  }
+
+  const SHAPES = {
+    cactus: makeCactus, coral: makeCactus, ice: makeSpikes, rock: makeRock, castle: makeCastle, bamboo: makeBamboo,
+    tree: makeTree, acacia: makeAcacia, candy: makeCandy, cone: makeCone, mushroom: makeMushroom,
+    pumpkin: makePumpkin, tomb: makeTomb, crystal: makeCrystal,
+  };
 
   // ---------------------------------------------------------------------------
   // Canvas
@@ -339,7 +445,7 @@
   let nextGap = 600, powerTimer = 10, lastMilestone = 0, flashT = 0;
   let shake = 0, invuln = 0, cycleT = 0, night = 0, restartAt = 0, bestFlashed = false;
 
-  const biome = { cur: 0, prev: 0, blend: 1, banner: 0 };
+  const biome = { cur: 0, prev: 0, start: 0, blend: 1, banner: 0 };
   const active = { shield: 0, magnet: 0, slow: 0, double: 0, x2: 0 };
   const activeMax = { shield: 1, magnet: 1, slow: 1, double: 1, x2: 1 };
   const input = { duck: false };
@@ -372,16 +478,28 @@
   // ---------------------------------------------------------------------------
   // Player
   // ---------------------------------------------------------------------------
+  const DINO_FRAMES = { stand: FR_STAND, run1: FR_RUN1, run2: FR_RUN2, duck1: FR_DUCK1, duck2: FR_DUCK2 };
+  const framesOf = skin => skin.frames || DINO_FRAMES;
+
   function playerRows() {
-    if (P.dead || !P.ground) return FR_STAND;
+    const fr = framesOf(currentSkin());
+    if (P.dead || !P.ground) return fr.stand;
     const f = Math.floor(P.anim) % 2;
-    if (P.duck) return f ? FR_DUCK2 : FR_DUCK1;
-    return f ? FR_RUN2 : FR_RUN1;
+    if (P.duck) return f ? fr.duck2 : fr.duck1;
+    return f ? fr.run2 : fr.run1;
   }
   function playerBoxes() {
+    const fr = framesOf(currentSkin());
     const rows = playerRows();
-    const h = rows.length * PX, top = P.y - h;
-    if (rows === FR_DUCK1 || rows === FR_DUCK2) return [{ x: P.x + 4, y: top + 4, w: spriteW(rows) - 10, h: h - 6 }];
+    const h = rows.length * PX, w = spriteW(rows), top = P.y - h;
+    const ducking = rows === fr.duck1 || rows === fr.duck2;
+    if (fr !== DINO_FRAMES) {
+      // Chibi characters: one forgiving box around the body.
+      return ducking
+        ? [{ x: P.x + w * 0.12, y: top + 3, w: w * 0.76, h: h - 4 }]
+        : [{ x: P.x + w * 0.15, y: top + h * 0.08, w: w * 0.7, h: h * 0.9 }];
+    }
+    if (ducking) return [{ x: P.x + 4, y: top + 4, w: w - 10, h: h - 6 }];
     return [
       { x: P.x + 30, y: top + 2, w: 26, h: 22 },
       { x: P.x + 6, y: top + 20, w: 40, h: h - 22 },
@@ -428,7 +546,8 @@
   // Spawning
   // ---------------------------------------------------------------------------
   function spawnObstacleGroup(big, x0) {
-    const kind = BIOMES[biome.cur].obsKind;
+    const kinds = [].concat(BIOMES[biome.cur].obsKind);
+    const kind = kinds[randInt(0, kinds.length - 1)];
     let n = 1;
     if (Math.random() < (score > 400 ? 0.5 : 0.3)) n++;
     if (!big && score > 900 && Math.random() < 0.35) n++;
@@ -640,6 +759,20 @@
         spawn(6, () => ({ x: rand(0, W), y: GROUND, vx: -worldSpeed * 0.3, vy: -rand(60, 130),
           size: 3, color: '#ff8c32', wob: rand(0, 6), life: 2.2 }));
       }
+      else if (type === 'rain') spawn(70, () => ({ x: rand(0, W + 300), y: -12, vx: -worldSpeed * 0.3 - 120, vy: rand(650, 800),
+        size: 2, h: 10, color: 'rgba(170,200,255,.5)', wob: 0, life: 2 }));
+      else if (type === 'petals') spawn(9, () => ({ x: rand(0, W + 200), y: -6, vx: -60 - worldSpeed * 0.35, vy: rand(30, 60),
+        size: 4, color: ['#ffc1d6', '#ffa3c2', '#fff0f5'][randInt(0, 2)], wob: rand(0, 6), life: 8 }));
+      else if (type === 'confetti') spawn(10, () => ({ x: rand(0, W + 200), y: -6, vx: -40 - worldSpeed * 0.3, vy: rand(50, 90),
+        size: 4, color: ['#ff5e9c', '#47e5ff', '#ffd23f', '#9b59ff', '#4fd18b'][randInt(0, 4)], wob: rand(0, 6), life: 8 }));
+      else if (type === 'bubbles') spawn(7, () => ({ x: rand(0, W + 100), y: GROUND - 2, vx: -worldSpeed * 0.2, vy: -rand(40, 90),
+        size: Math.random() < 0.3 ? 6 : 4, color: 'rgba(220,250,255,.6)', wob: rand(0, 6), life: 6 }));
+      else if (type === 'fireflies') spawn(3, () => ({ x: rand(0, W + 100), y: rand(GROUND - 170, GROUND - 10), vx: -worldSpeed * 0.15, vy: rand(-15, 15),
+        size: 3, color: '#fff07a', wob: rand(0, 6), life: 5, blink: true }));
+      else if (type === 'sparkle') spawn(6, () => ({ x: rand(0, W + 100), y: rand(0, GROUND - 20), vx: -worldSpeed * 0.1, vy: 0,
+        size: 3, color: '#ffffff', wob: rand(0, 6), life: 1.6, blink: true }));
+      else if (type === 'wisps') spawn(3, () => ({ x: rand(0, W + 100), y: rand(GROUND - 120, GROUND), vx: -worldSpeed * 0.2, vy: -rand(10, 30),
+        size: 4, color: '#cde8ff', wob: rand(0, 6), life: 4, blink: true }));
     }
     for (const w of weather) {
       w.life -= dt;
@@ -703,10 +836,15 @@
       bestFlashed = true;
       floater(W / 2, 110, 'NEW BEST!', '#ffcc33');
     }
-    const bi = Math.floor(score / 1000) % BIOMES.length;
+    const bi = (biome.start + Math.floor(score / ZONE_LEN)) % BIOMES.length;
     if (bi !== biome.cur) {
       biome.prev = biome.cur; biome.cur = bi; biome.blend = 0; biome.banner = 3;
       sfx.zone();
+      if (!save.venues.includes(bi)) {
+        save.venues.push(bi);
+        persist();
+        floater(W / 2, 170, 'NEW VENUE UNLOCKED!', '#4fd18b');
+      }
     }
 
     updatePlayer(dt);
@@ -733,7 +871,10 @@
     p.speck = mix(p.speck, '#1c2033', n * 0.3);
     p.obs = mix(p.obs, '#a7b4d6', n * 0.3);
     p.ptero = mix(p.ptero, '#b9c2e0', n * 0.6);
-    p.text = mix('#535353', '#eef1ff', n);
+    // How dark the sky is (night or a dark venue): drives HUD text and the classic dino colour.
+    const lum = hex => { const c = hexToRgb(hex); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; };
+    p.dark = Math.max(n, clamp((0.6 - lum(p.skyBot)) / 0.25, 0, 1));
+    p.text = mix('#535353', '#eef1ff', Math.max(n, clamp((0.6 - lum(p.skyTop)) / 0.25, 0, 1)));
     p.cloud = mix('#ffffff', '#4f5a84', n);
     return p;
   }
@@ -741,13 +882,37 @@
   function ridgeY(x, seed) {
     return Math.sin(x * 0.0031 + seed) * 0.55 + Math.sin(x * 0.0087 + seed * 1.7) * 0.3 + Math.sin(x * 0.021 + seed * 3.1) * 0.15;
   }
-  function drawRidge(color, parallax, base, amp, seed, step) {
+  function peakY(x, seed) {
+    const a = 1 - Math.abs(Math.sin(x * 0.0045 + seed));
+    return clamp(a * a * 1.7 - 0.6 + Math.sin(x * 0.02 + seed * 2) * 0.15, -1, 1);
+  }
+  const seaY = (x, seed) => Math.sin(x * 0.05 + seed + time * 2) * 0.04;
+
+  // Skyline of buildings with lit windows, locked to world position.
+  function drawCity(color, parallax, base, amp, seed) {
+    const off = worldX * parallax, bw = 42, i0 = Math.floor(off / bw);
+    for (let i = i0 - 1; i < i0 + W / bw + 2; i++) {
+      const h = hash(i * 1.7 + seed);
+      const top = Math.round((base - amp * (0.3 + 0.7 * h)) / PX) * PX;
+      const x = Math.round(i * bw - off), bwid = bw - (h > 0.6 ? 6 : 0);
+      ctx.fillStyle = color;
+      ctx.fillRect(x, top, bwid, GROUND - top);
+      ctx.fillStyle = parallax < 0.2 ? 'rgba(255,214,107,.35)' : 'rgba(255,214,107,.7)';
+      for (let wy = top + 8; wy < GROUND - 10; wy += 12) {
+        for (let wx = x + 6; wx < x + bwid - 6; wx += 10) if (hash(i * 13.1 + wy * 0.37 + wx * 0.011) > 0.55) ctx.fillRect(wx, wy, 4, 5);
+      }
+    }
+  }
+
+  function drawRidge(color, parallax, base, amp, seed, step, style = 'hills') {
+    if (style === 'city') { drawCity(color, parallax, base, amp, seed); return; }
+    const f = style === 'peaks' ? peakY : style === 'sea' ? seaY : ridgeY;
     const off = worldX * parallax;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(-20, GROUND);
     for (let x = -(off % step) - step; x <= W + step; x += step) {
-      const y = Math.round((base - amp * (ridgeY(x + off, seed) * 0.5 + 0.5)) / PX) * PX;
+      const y = Math.round((base - amp * (f(x + off, seed) * 0.5 + 0.5)) / PX) * PX;
       ctx.lineTo(x, y);
       ctx.lineTo(x + step, y);
     }
@@ -763,33 +928,67 @@
     ctx.fillStyle = sky;
     ctx.fillRect(-20, -20, W + 40, GROUND + 20);
 
-    if (night > 0.01) {
+    const v = BIOMES[biome.cur], vp = BIOMES[biome.prev], k = ease(biome.blend);
+    // Flags fade between the previous and current venue.
+    const flag = name => (v[name] ? k : 0) + (vp[name] ? 1 - k : 0);
+    const starA = Math.max(night, flag('stars'));
+    const skyA = 1 - flag('noSky');
+
+    if (starA > 0.01) {
       for (const s of stars) {
-        ctx.globalAlpha = night * (0.55 + 0.45 * Math.sin(time * 2 + s.tw));
+        ctx.globalAlpha = starA * (0.55 + 0.45 * Math.sin(time * 2 + s.tw));
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(Math.round(s.x), Math.round(s.y), s.big ? 4 : 2, s.big ? 4 : 2);
       }
-      ctx.globalAlpha = night;
+      ctx.globalAlpha = 1;
+    }
+    const auroraA = flag('aurora');
+    if (auroraA > 0.01) {
+      for (let b = 0; b < 3; b++) {
+        ctx.fillStyle = b === 1 ? 'rgba(170,110,255,.10)' : 'rgba(80,255,170,.12)';
+        ctx.globalAlpha = auroraA;
+        for (let x = 0; x < W; x += 12) {
+          const y = 40 + b * 26 + Math.sin(x * 0.008 + time * 0.6 + b * 1.7) * 22;
+          ctx.fillRect(x, Math.round(y / PX) * PX, 12, 60 - b * 10);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+    const planetA = flag('planet');
+    if (planetA > 0.01) {
+      ctx.globalAlpha = planetA;
+      pixelCircle(640, 92, 30, '#3a7bd5');
+      pixelCircle(628, 82, 10, '#4fae5a');
+      pixelCircle(654, 104, 8, '#4fae5a');
+      pixelCircle(646, 72, 5, '#f4f6ff');
+      ctx.globalAlpha = 1;
+    }
+    const sunMoonA = skyA * (1 - planetA);
+    if (night > 0.01 && sunMoonA > 0.01) {
+      ctx.globalAlpha = night * sunMoonA;
       pixelCircle(640, 88, 21, '#f4f1d8');
       pixelCircle(632, 82, 4, '#d8d3b4');
       pixelCircle(648, 98, 3, '#d8d3b4');
       ctx.globalAlpha = 1;
     }
-    if (night < 0.99) {
-      ctx.globalAlpha = (1 - night) * 0.25;
+    if (night < 0.99 && sunMoonA > 0.01) {
+      ctx.globalAlpha = (1 - night) * 0.25 * sunMoonA;
       pixelCircle(640, 92, 36, '#fff6c8');
-      ctx.globalAlpha = 1 - night;
+      ctx.globalAlpha = (1 - night) * sunMoonA;
       pixelCircle(640, 92, 24, '#fff2a8');
       ctx.globalAlpha = 1;
     }
 
-    drawRidge(p.far, 0.08, GROUND - 50, 90, 1.3, 12);
-    for (const c of clouds) {
-      ctx.globalAlpha = 0.85;
-      drawSprite(ctx, CLOUD, c.x, c.y, { '#': p.cloud });
+    drawRidge(p.far, 0.08, GROUND - 50, 90, 1.3, 12, v.farStyle);
+    const cloudA = skyA * (1 - flag('noClouds'));
+    if (cloudA > 0.01) {
+      for (const c of clouds) {
+        ctx.globalAlpha = 0.85 * cloudA;
+        drawSprite(ctx, CLOUD, c.x, c.y, { '#': p.cloud });
+      }
     }
     ctx.globalAlpha = 1;
-    drawRidge(p.near, 0.25, GROUND - 6, 50, 4.2, 9);
+    drawRidge(p.near, 0.25, GROUND - 6, 50, 4.2, 9, v.nearStyle);
 
     // Ground
     ctx.fillStyle = p.ground;
@@ -869,7 +1068,7 @@
     for (const o of obstacles) {
       switch (o.kind) {
         case 'block':
-          drawSprite(ctx, o.rows, o.x, o.y, { '#': p.obs, '+': p.obsAccent });
+          drawSprite(ctx, o.rows, o.x, o.y, Object.assign({ '#': p.obs, '+': p.obsAccent }, FIXED));
           break;
         case 'ptero':
           drawSprite(ctx, Math.floor(o.t / 0.18) % 2 ? PTERO_B : PTERO_A, o.x, o.y, { '#': p.ptero, e: '#ff4b3a' });
@@ -898,7 +1097,17 @@
     }
   }
 
-  function drawPlayer() {
+  function skinColors(skin, dark, dead) {
+    if (skin.palette) return dead ? Object.assign({}, skin.palette, { e: '#ff3b3b' }) : skin.palette;
+    let body;
+    if (skin.rainbow) body = r => `hsl(${Math.round(time * 160 + r * 18) % 360},85%,58%)`;
+    else if (skin.id === 'classic') body = mix(skin.color, '#d9dcea', dark);
+    else body = skin.color;
+    const eye = dead ? '#ff3b3b' : (skin.id === 'ghost' ? '#3a4a7a' : '#ffffff');
+    return { '#': body, e: eye };
+  }
+
+  function drawPlayer(p) {
     const skin = currentSkin();
     const rows = playerRows();
     const w = spriteW(rows), h = rows.length * PX, top = P.y - h;
@@ -908,13 +1117,8 @@
     ctx.fillRect(Math.round(P.x + w / 2 - sw / 2), GROUND + 3, Math.round(sw), 3);
 
     if (invuln > 0 && Math.floor(time * 20) % 2 === 0) return;
-    let body;
-    if (skin.rainbow) body = r => `hsl(${Math.round(time * 160 + r * 18) % 360},85%,58%)`;
-    else if (skin.id === 'classic') body = mix(skin.color, '#d9dcea', night);
-    else body = skin.color;
-    const eye = P.dead ? '#ff3b3b' : (skin.id === 'ghost' ? '#3a4a7a' : '#ffffff');
     ctx.globalAlpha = skin.alpha || 1;
-    drawSprite(ctx, rows, P.x, top, { '#': body, e: eye });
+    drawSprite(ctx, rows, P.x, top, skinColors(skin, p.dark, P.dead));
     ctx.globalAlpha = 1;
 
     if (active.shield > 0 && !P.dead) {
@@ -950,9 +1154,11 @@
     }
     ctx.globalAlpha = 1;
     for (const w of weather) {
+      ctx.globalAlpha = w.blink ? 0.35 + 0.65 * Math.abs(Math.sin(time * 4 + w.wob)) : 1;
       ctx.fillStyle = w.color;
-      ctx.fillRect(Math.round(w.x), Math.round(w.y), w.size, w.size);
+      ctx.fillRect(Math.round(w.x), Math.round(w.y), w.size, w.h || w.size);
     }
+    ctx.globalAlpha = 1;
   }
 
   function text(str, x, y, size, color, align = 'left', shadow = null) {
@@ -972,7 +1178,7 @@
     ctx.globalAlpha = 0.6;
     text('HI ' + hi, W - 20 - 16 * 5 - 24, 18, 16, p.text, 'right');
     ctx.globalAlpha = 0.75;
-    text(`ZONE ${Math.floor(score / 1000) + 1} · ${BIOMES[biome.cur].name}`, W - 20, 44, 8, p.text, 'right');
+    text(`ZONE ${Math.floor(score / ZONE_LEN) + 1} · ${BIOMES[biome.cur].name}`, W - 20, 44, 8, p.text, 'right');
     ctx.globalAlpha = 1;
 
     drawCoin(30, 26, time * 4);
@@ -999,7 +1205,7 @@
     if (biome.banner > 0) {
       const t = biome.banner;
       ctx.globalAlpha = clamp(Math.min(t, (3 - t) * 3), 0, 1);
-      text(`ZONE ${Math.floor(score / 1000) + 1}`, W / 2, 96, 24, '#ffffff', 'center', 'rgba(0,0,0,.55)');
+      text(`ZONE ${Math.floor(score / ZONE_LEN) + 1}`, W / 2, 96, 24, '#ffffff', 'center', 'rgba(0,0,0,.55)');
       text(BIOMES[biome.cur].name, W / 2, 134, 12, '#ffcc33', 'center', 'rgba(0,0,0,.55)');
       ctx.globalAlpha = 1;
     }
@@ -1015,7 +1221,7 @@
     drawBackground(p);
     drawPickups();
     drawObstacles(p);
-    drawPlayer();
+    drawPlayer(p);
     drawFx();
     ctx.restore();
 
@@ -1030,7 +1236,7 @@
   // Game flow
   // ---------------------------------------------------------------------------
   const $ = id => document.getElementById(id);
-  const ui = { menu: $('menu'), pause: $('pause'), over: $('over'), shop: $('shop') };
+  const ui = { menu: $('menu'), pause: $('pause'), over: $('over'), shop: $('shop'), venues: $('venues') };
   const isOpen = name => !ui[name].classList.contains('hidden');
   function show(name) {
     for (const k in ui) ui[k].classList.toggle('hidden', k !== name);
@@ -1044,7 +1250,8 @@
     for (const k of POWER_KEYS) { active[k] = 0; activeMax[k] = 1; }
     if (save.startShield) active.shield = Infinity;
     Object.assign(P, { y: GROUND, vy: 0, ground: true, duck: false, airJumps: 0, buffer: 0, dead: false });
-    Object.assign(biome, { cur: 0, prev: 0, blend: 1, banner: 3 });
+    const sv = save.venues.includes(save.startVenue) ? save.startVenue : 0;
+    Object.assign(biome, { cur: sv, prev: sv, start: sv, blend: 1, banner: 3 });
   }
 
   function startGame() {
@@ -1074,7 +1281,7 @@
     $('oScore').textContent = final;
     $('oBest').textContent = save.best;
     $('oCoins').textContent = '+' + earned;
-    $('oZone').textContent = `Zone ${Math.floor(final / 1000) + 1} · ${BIOMES[biome.cur].name} · ${runCoins} coins + ${bonus} score bonus`;
+    $('oZone').textContent = `Zone ${Math.floor(final / ZONE_LEN) + 1} · ${BIOMES[biome.cur].name} · ${runCoins} coins + ${bonus} score bonus`;
     $('newBest').classList.toggle('hidden', !newBest);
     setTimeout(() => { if (state === 'over' && !isOpen('shop')) show('over'); }, 700);
   }
@@ -1084,8 +1291,11 @@
     obstacles.length = coins.length = powerups.length = 0;
     for (const k of POWER_KEYS) active[k] = 0;
     Object.assign(P, { y: GROUND, vy: 0, ground: true, duck: false, dead: false });
+    const sv = save.venues.includes(save.startVenue) ? save.startVenue : 0;
+    Object.assign(biome, { cur: sv, prev: sv, start: sv, blend: 1, banner: 0 });
     $('mBest').textContent = save.best;
     $('mCoins').textContent = save.coins;
+    $('mVenue').textContent = `Venue: ${BIOMES[sv].name} · ${save.venues.length}/${BIOMES.length} unlocked`;
     show('menu');
   }
 
@@ -1113,20 +1323,28 @@
     const g = cv.getContext('2d');
     g.imageSmoothingEnabled = false;
     g.clearRect(0, 0, cv.width, cv.height);
-    const rows = FR_STAND, w = spriteW(rows), h = rows.length * PX;
+    const rows = framesOf(skin).stand, w = spriteW(rows), h = rows.length * PX;
     g.fillStyle = '#8a6a3e';
-    g.fillRect(8, cv.height - 14, cv.width - 16, 3);
+    g.fillRect(8, cv.height - 10, cv.width - 16, 3);
     g.globalAlpha = skin.alpha || 1;
-    const body = skin.rainbow ? (r => `hsl(${r * 20},85%,58%)`) : skin.color;
-    drawSprite(g, rows, (cv.width - w) / 2, cv.height - 14 - h, { '#': body, e: skin.id === 'ghost' ? '#3a4a7a' : '#ffffff' });
+    const colors = skin.rainbow ? { '#': r => `hsl(${r * 20},85%,58%)`, e: '#ffffff' } : skinColors(skin, 0, false);
+    drawSprite(g, rows, (cv.width - w) / 2, cv.height - 10 - h, colors);
     g.globalAlpha = 1;
   }
 
   function renderShop() {
     $('sCoins').textContent = save.coins;
-    const gridEl = $('skinGrid');
-    gridEl.innerHTML = '';
-    for (const s of SKINS) {
+    const wrap = $('skinGrid');
+    wrap.innerHTML = '';
+    for (const [group, label] of SKIN_GROUPS) {
+      const skins = SKINS.filter(s => s.group === group);
+      const head = document.createElement('h4');
+      head.className = 'group-title';
+      head.textContent = `${label} · ${skins.filter(s => save.owned.includes(s.id)).length}/${skins.length}`;
+      const gridEl = document.createElement('div');
+      gridEl.className = 'grid';
+      wrap.append(head, gridEl);
+      for (const s of skins) {
       const owned = save.owned.includes(s.id), eq = save.skin === s.id;
       const card = document.createElement('button');
       card.className = 'skin' + (eq ? ' equipped' : '') + (!owned && save.coins < s.price ? ' locked' : '');
@@ -1142,6 +1360,7 @@
       price.textContent = eq ? 'EQUIPPED' : owned ? 'EQUIP' : '● ' + s.price;
       card.append(cv, name, price);
       gridEl.append(card);
+      }
     }
 
     const up = $('upgrades');
@@ -1161,6 +1380,30 @@
       row.append(btn);
       up.append(row);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Venue picker
+  // ---------------------------------------------------------------------------
+  function renderVenues() {
+    const el = $('venueGrid');
+    el.innerHTML = '';
+    BIOMES.forEach((v, i) => {
+      const open = save.venues.includes(i);
+      const card = document.createElement('button');
+      card.className = 'venue' + (open ? '' : ' locked') + (save.startVenue === i ? ' equipped' : '');
+      card.dataset.venue = i;
+      card.style.setProperty('--sky', `linear-gradient(${v.stars ? v.nTop : v.skyTop}, ${v.stars ? v.nBot : v.skyBot})`);
+      card.style.setProperty('--far', v.far);
+      card.style.setProperty('--near', v.near);
+      card.style.setProperty('--ground', v.ground);
+      card.style.setProperty('--obs', v.obs);
+      card.innerHTML = `<div class="scene"><i class="far"></i><i class="near"></i><i class="obs"></i><i class="gnd"></i></div>
+        <div class="name">${open ? v.name : '???'}</div>
+        <div class="price">${save.startVenue === i ? 'SELECTED' : open ? 'START HERE' : '🔒 REACH IN A RUN'}</div>`;
+      el.append(card);
+    });
+    $('vCount').textContent = `${save.venues.length}/${BIOMES.length}`;
   }
 
   function openShop() {
@@ -1206,6 +1449,18 @@
   // Input
   // ---------------------------------------------------------------------------
   document.addEventListener('click', e => {
+    const venueEl = e.target.closest('[data-venue]');
+    if (venueEl) {
+      venueEl.blur();
+      const i = +venueEl.dataset.venue;
+      if (!save.venues.includes(i)) { nope(venueEl); return; }
+      save.startVenue = i;
+      persist();
+      sfx.coin();
+      renderVenues();
+      Object.assign(biome, { cur: i, prev: i, start: i, blend: 1 });
+      return;
+    }
     const skinEl = e.target.closest('[data-skin]');
     if (skinEl) { skinEl.blur(); buySkin(skinEl.dataset.skin, skinEl); return; }
     const upEl = e.target.closest('[data-up]');
@@ -1217,6 +1472,7 @@
       case 'play': startGame(); break;
       case 'shop': openShop(); break;
       case 'help': $('help').classList.toggle('hidden'); break;
+      case 'venues': renderVenues(); show('venues'); break;
       case 'resume': resume(); break;
       case 'menu': case 'back': goMenu(); break;
     }
@@ -1230,14 +1486,14 @@
     if (isJump || isDuck) e.preventDefault();
     if (isJump || e.code === 'Enter') {
       if (e.repeat) return;
-      if (isOpen('shop')) return;
+      if (isOpen('shop') || isOpen('venues')) return;
       if (state === 'menu') { startGame(); return; }
       if (state === 'over') { if (time >= restartAt) startGame(); return; }
       if (state === 'pause') { resume(); return; }
       if (isJump) jumpPress();
     }
     if (isDuck) input.duck = true;
-    if (e.code === 'Escape' && isOpen('shop')) { goMenu(); return; }
+    if (e.code === 'Escape' && (isOpen('shop') || isOpen('venues'))) { goMenu(); return; }
     if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
     if (e.code === 'KeyM') toggleMute();
   });
