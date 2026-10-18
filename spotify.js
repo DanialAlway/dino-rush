@@ -35,7 +35,7 @@
 
   let auth = ls.get(KEY); // { access, refresh, expires }
   let sdkPlayer = null, sdkDevice = null, sdkRequested = false;
-  let playing = false, pollTimer = 0, volTimer = 0;
+  let playing = false, pollTimer = 0, volTimer = 0, userId = '';
 
   function msg(text) {
     $('spMsg').textContent = text || '';
@@ -114,7 +114,12 @@
   function explain(e) {
     if (e.reason === 'NO_ACTIVE_DEVICE' || e.status === 404) return 'No device to play on. Open Spotify on your phone or computer, or pick a device under PLAY ON.';
     if (e.reason === 'PREMIUM_REQUIRED') return 'Spotify Premium is needed to control playback.';
-    if (e.status === 403) return 'This Spotify account is not approved for Dino Rush yet. Spotify only allows 5 accounts, so ask Danial to add yours.';
+    if (e.status === 403) {
+      if (/not registered|developer dashboard|not allowed to access/i.test(e.message)) {
+        return 'This Spotify account is not approved for Dino Rush yet. Spotify only allows 5 accounts, so ask Danial to add yours.';
+      }
+      return `Spotify refused that (${e.message}). Wait a second and try again, or pick another device under PLAY ON.`;
+    }
     if (e.status === 429) return 'Spotify is busy. Try again in a minute.';
     return 'Spotify: ' + e.message;
   }
@@ -132,6 +137,7 @@
   // ---------------------------------------------------------------------------
   async function loadMe() {
     const me = await api('/me');
+    userId = me.id || '';
     $('spName').textContent = (me.display_name || me.id || 'Spotify user').toUpperCase();
     if (me.product && me.product !== 'premium') msg('Your account is not Premium. Spotify only lets Premium accounts play through apps like this, but you can still browse.');
   }
@@ -187,17 +193,27 @@
     sel.value = devices.some(x => x.id === prev) ? prev : (sdkDevice || (active && active.id) || (devices[0] && devices[0].id) || '');
   }
 
-  async function refreshNow() {
-    const s = await api('/me/player');
-    const item = s && s.item;
-    playing = !!(s && s.is_playing);
+  function showTrack(item, isPlaying) {
+    playing = !!isPlaying;
     $('spPlay').textContent = playing ? '❚❚' : '▶';
     $('spTrack').textContent = item ? item.name : 'Nothing playing';
-    $('spArtist').textContent = item ? (item.artists || item.show && [item.show] || []).map(a => a.name).join(', ') : 'Pick a playlist below';
+    $('spArtist').textContent = item ? (item.artists || (item.show && [item.show]) || []).map(a => a.name).join(', ') : 'Pick a playlist below';
     const imgs = item && (item.album || item.show || {}).images;
     $('spArt').src = imgs && imgs.length ? imgs[imgs.length > 1 ? 1 : 0].url : '';
     $('spArt').classList.toggle('hidden', !(imgs && imgs.length));
-    if (s && typeof s.device?.volume_percent === 'number' && document.activeElement !== $('spVol')) $('spVol').value = s.device.volume_percent;
+  }
+
+  // True when music should play inside this browser tab (the Web Playback SDK device).
+  const local = () => !!(sdkPlayer && sdkDevice && $('spDevice').value === sdkDevice);
+
+  async function refreshNow() {
+    if (local()) {
+      const st = await sdkPlayer.getCurrentState();
+      if (st) { showTrack(st.track_window.current_track, !st.paused); return; }
+    }
+    const s = await api('/me/player');
+    showTrack(s && s.item, s && s.is_playing);
+    if (s && s.device && typeof s.device.volume_percent === 'number' && document.activeElement !== $('spVol')) $('spVol').value = s.device.volume_percent;
   }
 
   function startPolling() {
@@ -222,10 +238,13 @@
   async function playList(btn) {
     let body;
     if (btn.dataset.liked) {
-      const d = await api('/me/tracks?limit=50');
-      const uris = (d.items || []).map(i => i.track && i.track.uri).filter(Boolean);
-      if (!uris.length) { msg('You have no liked songs yet.'); return; }
-      body = { uris };
+      let uris = [];
+      try {
+        const d = await api('/me/tracks?limit=50');
+        uris = (d.items || []).map(i => i.track && i.track.uri).filter(Boolean);
+      } catch (e) { uris = []; }
+      // Fall back to the Liked Songs collection as a whole.
+      body = uris.length ? { uris } : { context_uri: `spotify:user:${userId}:collection` };
     } else body = { context_uri: btn.dataset.uri };
     await api('/me/player/play' + deviceParam(), { method: 'PUT', body: JSON.stringify(body) });
     for (const b of document.querySelectorAll('.sp-list')) b.classList.toggle('on', b === btn);
@@ -246,7 +265,9 @@
       sdkPlayer.addListener('account_error', () => msg('Spotify Premium is needed to play inside the game. You can still pick another device under PLAY ON.'));
       sdkPlayer.addListener('initialization_error', () => msg('This browser cannot play Spotify inside the game (phones are not supported). Pick your phone or computer under PLAY ON instead.'));
       sdkPlayer.addListener('authentication_error', () => msg('Spotify login expired. Please log in again.'));
-      sdkPlayer.addListener('player_state_changed', () => { refreshNow().catch(() => {}); });
+      sdkPlayer.addListener('player_state_changed', st => {
+        if (st && local()) showTrack(st.track_window.current_track, !st.paused);
+      });
       sdkPlayer.connect();
     };
     const s = document.createElement('script');
@@ -279,22 +300,37 @@
 
   $('spLogin').addEventListener('click', () => { msg(''); login().catch(e => msg(explain(e))); });
   $('spLogout').addEventListener('click', logout);
-  $('spPlay').addEventListener('click', () => control(() => api('/me/player/' + (playing ? 'pause' : 'play') + deviceParam(), { method: 'PUT' })));
-  $('spNext').addEventListener('click', () => control(() => api('/me/player/next' + deviceParam(), { method: 'POST' })));
-  $('spPrev').addEventListener('click', () => control(() => api('/me/player/previous' + deviceParam(), { method: 'POST' })));
+  // Chrome keeps the in-game player silent until it is unlocked inside a click.
+  const unlockAudio = () => { if (sdkPlayer && sdkPlayer.activateElement) sdkPlayer.activateElement(); };
+
+  $('spPlay').addEventListener('click', () => {
+    unlockAudio();
+    control(() => (local() ? sdkPlayer.togglePlay() : api('/me/player/' + (playing ? 'pause' : 'play') + deviceParam(), { method: 'PUT' })));
+  });
+  $('spNext').addEventListener('click', () => {
+    unlockAudio();
+    control(() => (local() ? sdkPlayer.nextTrack() : api('/me/player/next' + deviceParam(), { method: 'POST' })));
+  });
+  $('spPrev').addEventListener('click', () => {
+    unlockAudio();
+    control(() => (local() ? sdkPlayer.previousTrack() : api('/me/player/previous' + deviceParam(), { method: 'POST' })));
+  });
   $('spVol').addEventListener('input', e => {
     clearTimeout(volTimer);
     const v = e.target.value;
-    volTimer = setTimeout(() => control(() => api('/me/player/volume?volume_percent=' + v + ($('spDevice').value ? '&device_id=' + encodeURIComponent($('spDevice').value) : ''), { method: 'PUT' })), 300);
+    volTimer = setTimeout(() => control(() => (local()
+      ? sdkPlayer.setVolume(v / 100)
+      : api('/me/player/volume?volume_percent=' + v + ($('spDevice').value ? '&device_id=' + encodeURIComponent($('spDevice').value) : ''), { method: 'PUT' }))), 300);
   });
   $('spDevice').addEventListener('change', e => {
     if (!e.target.value) return;
+    unlockAudio();
     control(() => api('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [e.target.value], play: playing }) }));
   });
   $('spRefresh').addEventListener('click', () => control(async () => { await refreshDevices(); await loadPlaylists(); }));
   $('spLists').addEventListener('click', e => {
     const b = e.target.closest('.sp-list');
-    if (b) { b.blur(); control(() => playList(b)); }
+    if (b) { b.blur(); unlockAudio(); control(() => playList(b)); }
   });
 
   (async () => {
